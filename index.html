@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>7JIA 导航</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; display: flex; height: 100vh; overflow: hidden; background: #f5f7fa; }
+
+        /* ========= 左侧导航 ========= */
+        .sidebar { width: 280px; min-width: 280px; background: #2c3e50; color: #ecf0f1; display: flex; flex-direction: column; height: 100vh; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            padding: 20px 25px;
+            border-bottom: 1px solid #34495e;
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .sidebar-logo {
+            height: 50px;  /* 放大到 50px */
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        .sidebar-nav { flex: 1; overflow-y: auto; padding: 15px 0; }
+        .nav-item { display: block; width: 100%; padding: 12px 25px; color: #bdc3c7; text-decoration: none; font-size: 15px; border: none; background: none; text-align: left; cursor: pointer; transition: all 0.2s; line-height: 1.4; }
+        .nav-item:hover { background: #34495e; color: #ffffff; }
+        .nav-item.active { background: #1abc9c; color: #ffffff; font-weight: bold; }
+        .nav-item.level-2 { padding-left: 45px; font-size: 14px; }
+        .nav-item.level-3 { padding-left: 65px; font-size: 13px; color: #95a5a6; }
+        .nav-item.level-3:hover { color: #ffffff; }
+
+        /* ========= 右侧内容 ========= */
+        .content { flex: 1; overflow-y: auto; padding: 40px 50px; background: #ffffff; height: 100vh; }
+        .content-section { display: none; animation: fadeIn 0.3s ease; }
+        .content-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .content-section h1 { font-size: 32px; color: #2c3e50; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #ecf0f1; }
+        .content-section h2 { font-size: 24px; color: #34495e; margin: 30px 0 15px; }
+        .content-section p { font-size: 16px; line-height: 1.8; color: #555; margin-bottom: 15px; }
+        .content-section ul { margin-left: 20px; color: #555; line-height: 1.8; }
+
+        /* ========= 头像卡片区域样式 ========= */
+        .streamer-grid { display: flex; flex-wrap: wrap; gap: 30px; margin-top: 20px; }
+        .streamer-card { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #333; transition: transform 0.2s; width: 120px; }
+        .streamer-card:hover { transform: translateY(-5px); }
+        .streamer-avatar { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 3px solid #fff; }
+        .streamer-name { margin-top: 10px; font-size: 16px; font-weight: bold; text-align: center; }
+
+        /* ========= 成员展示区域样式 ========= */
+        .member-block { margin-bottom: 40px; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background: #fafafa; }
+        .member-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+        .member-avatar { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #1abc9c; }
+        .member-name { font-size: 24px; font-weight: bold; color: #2c3e50; }
+        .member-link { display: flex; align-items: center; gap: 15px; text-decoration: none; color: inherit; }
+        .member-link:hover { opacity: 0.8; }
+        .video-grid { display: flex; flex-wrap: wrap; gap: 15px; }
+        .video-card { width: 200px; text-decoration: none; color: #333; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; background: #fff; }
+        .video-card:hover { transform: translateY(-5px); box-shadow: 0 6px 15px rgba(0,0,0,0.1); }
+        .video-cover { width: 100%; height: 112px; object-fit: cover; display: block; }
+        .video-title { display: block; padding: 8px 10px; font-size: 14px; font-weight: bold; text-align: center; }
+
+        /* ========= 比赛生成器样式 ========= */
+        .match-generator { margin-top: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+        .match-generator select, .match-generator button { padding: 10px 15px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; outline: none; cursor: pointer; }
+        .match-generator button { background: #1abc9c; color: white; border: none; }
+        .match-generator button:hover { background: #16a085; }
+
+        /* ========= 选手选择面板 ========= */
+        .player-selector { margin-top: 30px; }
+        .player-selector-title { font-size: 18px; font-weight: bold; color: #2c3e50; margin-bottom: 15px; }
+        .player-options { display: flex; flex-wrap: wrap; gap: 15px; }
+        .player-option { display: flex; flex-direction: column; align-items: center; padding: 10px; border: 2px solid #dee2e6; border-radius: 10px; cursor: pointer; transition: all 0.2s; width: 100px; text-align: center; }
+        .player-option img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin-bottom: 5px; }
+        .player-option span { font-size: 14px; font-weight: bold; }
+        .player-option.selected { border-color: #1abc9c; background-color: #e8f8f5; box-shadow: 0 4px 10px rgba(26,188,156,0.2); }
+
+        /* ========= 顺序调整区域 ========= */
+        .order-editor { margin-top: 30px; }
+        .order-editor-title { font-size: 18px; font-weight: bold; color: #2c3e50; margin-bottom: 15px; }
+        .order-list { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; }
+        .order-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid #dee2e6; border-radius: 8px; background: #f8f9fa; }
+        .order-item img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
+        .order-item .order-name { font-weight: bold; font-size: 14px; }
+        .order-item .order-num { background: #1abc9c; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
+        .order-btns { display: flex; gap: 3px; }
+        .order-btns button { width: 26px; height: 26px; border: none; border-radius: 4px; background: #ddd; cursor: pointer; font-size: 14px; }
+        .order-btns button:hover { background: #ccc; }
+        .order-btns button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* ========= 双败左右布局 ========= */
+        .bracket-wrapper { margin-top: 30px; display: flex; flex-direction: column; align-items: center; }
+        .bracket-columns { display: flex; width: 100%; justify-content: space-around; gap: 30px; flex-wrap: wrap; }
+        .bracket-column { flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 20px; }
+        .bracket-column-title { text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 10px; }
+        .winner-column .bracket-column-title { color: #1abc9c; }
+        .loser-column .bracket-column-title { color: #e74c3c; }
+        .match-round-boxes { display: flex; flex-direction: column; gap: 15px; align-items: center; }
+        .match-round-title { font-size: 16px; font-weight: bold; color: #555; margin-bottom: 5px; }
+        .match-box { background: #f8f9fa; border: 2px solid #dee2e6; border-radius: 8px; padding: 12px 18px; min-width: 200px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .match-box .versus { font-weight: bold; color: #333; margin-bottom: 5px; }
+        .match-box .result { font-size: 14px; color: #1abc9c; }
+        .match-box .loser-info { font-size: 14px; color: #e74c3c; }
+        .champion-box { background: #fef9e7; border-color: #f1c40f; box-shadow: 0 4px 10px rgba(241, 196, 15, 0.2); }
+        .final-section { margin-top: 30px; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .final-section .match-box { min-width: 260px; }
+
+        .clickable-player { cursor: pointer; padding: 5px 10px; border-radius: 5px; transition: background 0.2s; display: inline-flex; align-items: center; gap: 5px; }
+        .clickable-player:hover { background: #d1f2eb; }
+        .clickable-player.disabled { cursor: not-allowed; opacity: 0.5; }
+        .player-avatar-in-match { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; vertical-align: middle; }
+
+        .undo-btn { margin-top: 15px; padding: 8px 20px; background: #f39c12; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+        .undo-btn:hover { background: #e67e22; }
+        .undo-btn:disabled { background: #bdc3c7; cursor: not-allowed; }
+
+        /* 冠军头像特殊样式 */
+        .champion-avatar { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 4px solid #f1c40f; box-shadow: 0 6px 20px rgba(241, 196, 15, 0.4); display: inline-block; }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; height: auto; overflow: auto; }
+            .sidebar { width: 100%; min-width: 100%; height: auto; flex-direction: column; }
+            .sidebar-header { padding: 15px 20px; font-size: 18px; }
+            .sidebar-logo { height: 40px; }
+            .sidebar-nav { display: flex; overflow-x: auto; padding: 10px; white-space: nowrap; }
+            .nav-item { padding: 10px 15px; display: inline-block; width: auto; }
+            .nav-item.level-2 { padding-left: 15px; }
+            .nav-item.level-3 { padding-left: 15px; }
+            .content { padding: 20px; height: auto; overflow: visible; }
+            .streamer-grid { gap: 20px; }
+            .streamer-card { width: 100px; }
+            .streamer-avatar { width: 80px; height: 80px; }
+            .match-generator { flex-direction: column; align-items: flex-start; }
+            .bracket-columns { flex-direction: column; }
+            .player-option { width: 80px; }
+            .player-option img { width: 50px; height: 50px; }
+            .order-list { flex-direction: column; align-items: stretch; }
+            .video-card { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 左侧目录 -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img src="images/7JIA主页图片.jpg" alt="7JIA主页" class="sidebar-logo">
+            <span>7JIA 导航</span>
+        </div>
+        <nav class="sidebar-nav" id="sidebarNav">
+            <button class="nav-item active" data-target="members">7JIA成员</button>
+            <button class="nav-item level-2" data-target="streamers">7JIA主播</button>
+            <button class="nav-item level-2" data-target="clips">7JIA切片</button>
+            <button class="nav-item" data-target="member-creations">成员二创</button>
+            <button class="nav-item" data-target="group-78785478">78785478</button>
+            <button class="nav-item" data-target="tools">小工具</button>
+            <button class="nav-item level-2" data-target="gun-share">改枪分享</button>
+            <button class="nav-item level-2" data-target="simulator">赛事模拟器</button>
+            <button class="nav-item level-3" data-target="sim-1v1">1V1赛制</button>
+            <button class="nav-item level-3" data-target="sim-7jia-cup">7JIA杯杯赛赛制</button>
+            <button class="nav-item level-3" data-target="sim-points">积分赛制</button>
+        </nav>
+    </aside>
+
+    <!-- 右侧内容区域 -->
+    <main class="content" id="content">
+        <!-- 7JIA成员（一级标题内容） -->
+        <section class="content-section active" id="members">
+            <h1>7JIA成员</h1>
+            <p>成员作品展示，点击视频封面可跳转到B站观看。</p>
+
+            <!-- 成员：杨齐家 -->
+            <div class="member-block">
+                <div class="member-header">
+                    <a class="member-link" href="https://www.huya.com/60066" target="_blank">
+                        <img class="member-avatar" src="images/杨齐家.jpg" alt="杨齐家">
+                        <span class="member-name">杨齐家</span>
+                    </a>
+                </div>
+                <div class="video-grid member-videos">
+                    <a class="video-card" href="https://www.bilibili.com/video/BV1W7tm65EWd" target="_blank">
+                        <img class="video-cover" src="images/杨齐家视频1.jpg" alt="这巴克什太简单辣！">
+                        <span class="video-title">这巴克什太简单辣！</span>
+                    </a>
+                    <a class="video-card" href="https://www.bilibili.com/video/BV1Anhw6xEtq" target="_blank">
+                        <img class="video-cover" src="images/杨齐家视频2.jpg" alt="识鼠の术">
+                        <span class="video-title">识鼠の术</span>
+                    </a>
+                    <a class="video-card" href="https://www.bilibili.com/video/BV1Z1gA6YEzS" target="_blank">
+                        <img class="video-cover" src="images/杨齐家视频3.jpg" alt="魔丸归来">
+                        <span class="video-title">魔丸归来</span>
+                    </a>
+                    <a class="video-card" href="https://www.bilibili.com/video/BV1RK3t6wEH1" target="_blank">
+                        <img class="video-cover" src="images/杨齐家视频4.jpg" alt="这扳机纪律你就学吧">
+                        <span class="video-title">这扳机纪律你就学吧</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 成员：冰糖方糕 -->
+            <div class="member-block">
+                <div class="member-header">
+                    <a class="member-link" href="https://space.bilibili.com/519739982?spm_id_from=333.337.0.0" target="_blank">
+                        <img class="member-avatar" src="images/冰糖方糕.jpg" alt="冰糖方糕">
+                        <span class="member-name">冰糖方糕</span>
+                    </a>
+                </div>
+                <div class="video-grid member-videos">
+                    <a class="video-card" href="https://www.bilibili.com/video/BV1HBstztEKf" target="_blank">
+                        <img class="video-cover" src="images/冰糖方糕视频1.jpg" alt="杨齐家化身打手小x和李渐离带小爱咪妹妹1">
+                        <span class="video-title">杨齐家化身打手小x和李渐离带小爱咪妹妹1：妹妹超绝情绪价值给杨哥哄成胎盘，最后舍不得杨哥走“我说白了我就想和你玩</span>
+                    </a>
+                    <a class="video-card" href="https://www.bilibili.com/video/BV1D4sazHER8" target="_blank">
+                        <img class="video-cover" src="images/冰糖方糕视频2.jpg" alt="杨齐家化身打手小x带小爱咪2">
+                        <span class="video-title">杨齐家化身打手小x带小爱咪2：五撤三得吃3400万，妹妹句句有回应舍不得老杨走，连唱四首情歌告别小爱咪圆满完结</span>
+                    </a>
+                    <a class="video-card" href="https://www.bilibili.com/video/BV1JCtW6uEWG" target="_blank">
+                        <img class="video-cover" src="images/冰糖方糕视频3.jpg" alt="杨齐家三排清图表演无伤下大坑">
+                        <span class="video-title">杨齐家三排清图表演无伤下大坑，三人全部摔死无人生还！机航欧美战斗爽，5分钟清图舔包搜25分钟！</span>
+                    </a>
+                    <a class="video-card" href="https://www.bilibili.com/video/BV1tt7U6FE8C" target="_blank">
+                        <img class="video-cover" src="images/冰糖方糕视频4.jpg" alt="一下也不用剪！杨齐家拯救话痨小甜妹妹">
+                        <span class="video-title">一下也不用剪！杨齐家拯救话痨小甜妹妹，带妹25连跪一把不撤打掉妹妹4000万！贴脸开串VIP喷位“快去丢包”“不如成成大王”！错过这场精彩的直播等于错过了人生！</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 成员：俊杰动画 -->
+            <div class="member-block">
+                <div class="member-header">
+                    <a class="member-link" href="https://space.bilibili.com/2144126699?spm_id_from=333.337.0.0" target="_blank">
+                        <img class="member-avatar" src="images/俊杰动画.jpg" alt="俊杰动画">
+                        <span class="member-name">俊杰动画</span>
+                    </a>
+                </div>
+                <div class="video-grid member-videos">
+                    <a class="video-card" href="https://www.bilibili.com/video/BV1C6Nb6KE2V" target="_blank">
+                        <img class="video-cover" src="images/俊杰动画视频1.jpg" alt="杨哥做任务被博士单杀">
+                        <span class="video-title">杨哥做任务被博士单杀</span>
+                    </a>
+                    <a class="video-card" href="https://www.bilibili.com/video/BV1zxKp6LE5R" target="_blank">
+                        <img class="video-cover" src="images/俊杰动画视频2.jpg" alt="杨哥最辉煌战绩：单杀mad98">
+                        <span class="video-title">杨哥最辉煌战绩：单杀mad98</span>
+                    </a>
+                    <a class="video-card" href="https://www.bilibili.com/video/BV1ZJuA6bEww" target="_blank">
+                        <img class="video-cover" src="images/俊杰动画视频3.jpg" alt="杨哥蠕动进塔被自家打手一发A达送走">
+                        <span class="video-title">杨哥蠕动进塔被自家打手一发A达送走，大叫谁是小童？</span>
+                    </a>
+                    <a class="video-card" href="https://www.bilibili.com/video/BV1J3uG6dE3L" target="_blank">
+                        <img class="video-cover" src="images/俊杰动画视频4.jpg" alt="喷气和杨哥小童发射区打牌">
+                        <span class="video-title">喷气和杨哥小童发射区打牌，输掉二十年劳动合同</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7JIA主播（二级标题内容） -->
+        <section class="content-section" id="streamers">
+            <h1>7JIA主播</h1>
+            <p>各位黑子白子串子黄子点击头像一键抵达工位</p>
+            <div class="streamer-grid">
+                <a class="streamer-card" href="https://www.huya.com/60066" target="_blank"><img class="streamer-avatar" src="images/杨齐家.jpg" alt="杨齐家"><span class="streamer-name">杨齐家</span></a>
+                <a class="streamer-card" href="https://www.huya.com/31240823" target="_blank"><img class="streamer-avatar" src="images/小童.jpg" alt="小童"><span class="streamer-name">小童</span></a>
+                <a class="streamer-card" href="https://www.huya.com/31117683" target="_blank"><img class="streamer-avatar" src="images/哈基敏.jpg" alt="哈基敏"><span class="streamer-name">哈基敏</span></a>
+                <a class="streamer-card" href="https://www.huya.com/31152002" target="_blank"><img class="streamer-avatar" src="images/高里头.jpg" alt="高里头"><span class="streamer-name">高里头</span></a>
+                <a class="streamer-card" href="https://www.huya.com/31136252" target="_blank"><img class="streamer-avatar" src="images/北北FPS.jpg" alt="北北FPS"><span class="streamer-name">北北FPS</span></a>
+                <a class="streamer-card" href="https://www.huya.com/19872115" target="_blank"><img class="streamer-avatar" src="images/Dash.jpg" alt="Dash"><span class="streamer-name">Dash</span></a>
+                <a class="streamer-card" href="https://www.huya.com/459804" target="_blank"><img class="streamer-avatar" src="images/嘉乐.jpg" alt="嘉乐"><span class="streamer-name">嘉乐</span></a>
+                <a class="streamer-card" href="https://v.douyin.com/dXHZZ_blPjM/" target="_blank"><img class="streamer-avatar" src="images/喷气.jpg" alt="喷气"><span class="streamer-name">喷气</span></a>
+                <a class="streamer-card" href="https://www.huya.com/152694" target="_blank"><img class="streamer-avatar" src="images/随便掏.jpg" alt="随便掏"><span class="streamer-name">随便掏</span></a>
+                <a class="streamer-card" href="https://www.huya.com/156246" target="_blank"><img class="streamer-avatar" src="images/军师老漠.jpg" alt="军师老漠"><span class="streamer-name">军师老漠</span></a>
+                <a class="streamer-card" href="https://www.huya.com/153649" target="_blank"><img class="streamer-avatar" src="images/李渐离.jpg" alt="李渐离"><span class="streamer-name">李渐离</span></a>
+                <a class="streamer-card" href="https://v.douyin.com/nQIYA0DUqp8/" target="_blank"><img class="streamer-avatar" src="images/小小鲨.jpg" alt="小小鲨"><span class="streamer-name">小小鲨</span></a>
+            </div>
+        </section>
+
+        <!-- 7JIA切片（二级标题内容） -->
+        <section class="content-section" id="clips">
+            <h1>7JIA切片</h1>
+            <p>点击头像进入B站主页：</p>
+            <div class="streamer-grid">
+                <a class="streamer-card" href="https://space.bilibili.com/519739982?spm_id_from=333.337.0.0" target="_blank"><img class="streamer-avatar" src="images/冰糖方糕.jpg" alt="冰糖方糕"><span class="streamer-name">冰糖方糕</span></a>
+                <a class="streamer-card" href="https://space.bilibili.com/579719233?spm_id_from=333.337.0.0" target="_blank"><img class="streamer-avatar" src="images/绘白QAQ.jpg" alt="绘白QAQ"><span class="streamer-name">绘白QAQ</span></a>
+                <a class="streamer-card" href="https://space.bilibili.com/3537124164896785?spm_id_from=333.337.0.0" target="_blank"><img class="streamer-avatar" src="images/七喜小甜水.jpg" alt="七喜小甜水"><span class="streamer-name">七喜小甜水</span></a>
+            </div>
+        </section>
+
+        <!-- 成员二创（一级标题） -->
+        <section class="content-section" id="member-creations">
+            <h1>成员二创</h1>
+            <p>点击头像进入B站主页：</p>
+            <div class="streamer-grid">
+                <a class="streamer-card" href="https://space.bilibili.com/2144126699?spm_id_from=333.337.0.0" target="_blank"><img class="streamer-avatar" src="images/俊杰动画.jpg" alt="俊杰动画"><span class="streamer-name">俊杰动画</span></a>
+            </div>
+        </section>
+
+        <!-- 78785478（新增一级标题） -->
+        <section class="content-section" id="group-78785478">
+            <h1>78785478</h1>
+            <p>点击头像进入直播间/主页：</p>
+            <div class="streamer-grid">
+                <a class="streamer-card" href="https://space.bilibili.com/403637371?spm_id_from=333.337.0.0" target="_blank"><img class="streamer-avatar" src="images/老飞宇66.jpg" alt="老飞宇66"><span class="streamer-name">老飞宇66</span></a>
+                <a class="streamer-card" href="https://live.bilibili.com/1861307113/?live_from=86001&spm_id_from=333.1387.0.0" target="_blank"><img class="streamer-avatar" src="images/何文凯大王66.jpg" alt="何文凯大王66"><span class="streamer-name">何文凯大王66</span></a>
+                <a class="streamer-card" href="https://space.bilibili.com/107934874?spm_id_from=333.337.0.0" target="_blank"><img class="streamer-avatar" src="images/温浅QVQ.jpg" alt="温浅QVQ"><span class="streamer-name">温浅QVQ</span></a>
+            </div>
+        </section>
+
+        <!-- 小工具（一级标题内容） -->
+        <section class="content-section" id="tools">
+            <h1>小工具</h1>
+            <p>这里是小工具集合页面。</p>
+        </section>
+
+        <!-- 改枪分享（二级标题内容） -->
+        <section class="content-section" id="gun-share">
+            <h1>改枪分享</h1>
+            <p>UP推荐</p>
+            <div class="member-block">
+                <div class="member-header">
+                    <a class="member-link" href="https://space.bilibili.com/52717408?spm_id_from=333.337.0.0" target="_blank">
+                        <img class="member-avatar" src="images/Always聪聪.jpg" alt="Always聪聪">
+                        <span class="member-name">Always聪聪</span>
+                    </a>
+                </div>
+                <div class="video-grid member-videos">
+                    <a class="video-card" href="https://www.bilibili.com/video/BV1m4bu62EHP" target="_blank">
+                        <img class="video-cover" src="images/Always聪聪视频1.jpg" alt="三角洲行动 5倍人机增伤！满改仅需9万的鼠鼠专武，鼬鼠套件93R全面解析与实战解说！【B+】">
+                        <span class="video-title">三角洲行动 5倍人机增伤！满改仅需9万的鼠鼠专武，鼬鼠套件93R全面解析与实战解说！【B+】</span>
+                    </a>
+                    <a class="video-card" href="https://www.bilibili.com/video/BV1Dvb76VEE4" target="_blank">
+                        <img class="video-cover" src="images/Always聪聪视频2.jpg" alt="三角洲行动 M14终于加强，操控更快手感提升！S11赛季最佳M14改法合集！【S+】">
+                        <span class="video-title">三角洲行动 M14终于加强，操控更快手感提升！S11赛季最佳M14改法合集！【S+】</span>
+                    </a>
+                    <a class="video-card" href="https://www.bilibili.com/video/BV1JYtk6ZE5y" target="_blank">
+                        <img class="video-cover" src="images/Always聪聪视频3.jpg" alt="三角洲行动 大口径BTK+顶级射速！打破输出数值极限！新枪汤姆逊最强顶配改法教学与优缺点介绍！【S+】">
+                        <span class="video-title">三角洲行动 大口径BTK+顶级射速！打破输出数值极限！新枪汤姆逊最强顶配改法教学与优缺点介绍！【S+】</span>
+                    </a>
+                    <a class="video-card" href="https://www.bilibili.com/video/BV14Jtk6qEsv" target="_blank">
+                        <img class="video-cover" src="images/Always聪聪视频4.jpg" alt="三角洲行动 最省上交！最稳改装！S11赛季任务金枪客全系列改法攻略！">
+                        <span class="video-title">三角洲行动 最省上交！最稳改装！S11赛季任务金枪客全系列改法攻略！</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 赛事模拟器（二级标题内容） -->
+        <section class="content-section" id="simulator">
+            <h1>赛事模拟器</h1>
+            <p>请选择左侧的三级标题查看具体赛制设置。</p>
+        </section>
+
+        <!-- 1V1赛制（三级标题内容） -->
+        <section class="content-section" id="sim-1v1">
+            <h1>1V1赛制</h1>
+            <p>选择参赛人数和选手，可调整对阵顺序。点击比赛中的选手名字记录胜负，支持返回上一步。</p>
+            <div class="match-generator">
+                <label for="playerCount">参赛人数：</label>
+                <select id="playerCount">
+                    <option value="6">6人</option>
+                    <option value="8" selected>8人</option>
+                    <option value="10">10人</option>
+                </select>
+                <label for="matchFormat">比赛赛制：</label>
+                <select id="matchFormat">
+                    <option value="double_elimination" selected>双败赛制</option>
+                </select>
+                <button id="generateBtn">生成比赛流程</button>
+            </div>
+
+            <div class="player-selector">
+                <div class="player-selector-title">选择参赛选手（仅限主播，点击选择/取消，不选则使用默认 Player）：</div>
+                <div class="player-options" id="playerOptions"></div>
+            </div>
+
+            <div class="order-editor" id="orderEditor" style="display:none;">
+                <div class="order-editor-title">🔄 调整对阵顺序（第1个 vs 第2个，第3个 vs 第4个...）：</div>
+                <div class="order-list" id="orderList"></div>
+            </div>
+
+            <button id="undoBtn" class="undo-btn" disabled>返回上一步</button>
+            <div id="matchResult"></div>
+        </section>
+
+        <!-- 7JIA杯杯赛赛制（三级标题内容） -->
+        <section class="content-section" id="sim-7jia-cup">
+            <h1>7JIA杯杯赛赛制</h1>
+            <p>这里可以放置7JIA杯杯赛的赛制说明、对阵表等。</p>
+        </section>
+
+        <!-- 积分赛制（三级标题内容） -->
+        <section class="content-section" id="sim-points">
+            <h1>积分赛制</h1>
+            <p>这里可以放置积分赛的规则、积分计算方式等。</p>
+        </section>
+    </main>
+
+    <script>
+        // ========== 导航切换 ==========
+        const navItems = document.querySelectorAll('.nav-item');
+        const contentSections = document.querySelectorAll('.content-section');
+        navItems.forEach(item => {
+            item.addEventListener('click', function() {
+                navItems.forEach(nav => nav.classList.remove('active'));
+                this.classList.add('active');
+                contentSections.forEach(section => section.classList.remove('active'));
+                const targetId = this.getAttribute('data-target');
+                const targetSection = document.getElementById(targetId);
+                if (targetSection) targetSection.classList.add('active');
+                if (window.innerWidth <= 768) document.querySelector('.content').scrollTop = 0;
+            });
+        });
+
+        // ========== 全局变量 ==========
+        let playerAvatarMap = new Map();
+        let currentBracket = null;
+        let historyStack = [];
+        let selectedOrder = [];
+        const undoBtn = document.getElementById('undoBtn');
+
+        // ========== 初始化头像映射（包含7JIA主播和78785478主播） ==========
+        function initAvatarMap() {
+            playerAvatarMap.clear();
+            document.querySelectorAll('#streamers .streamer-card, #group-78785478 .streamer-card').forEach(card => {
+                const name = card.querySelector('.streamer-name').textContent.trim();
+                const avatar = card.querySelector('.streamer-avatar').getAttribute('src');
+                playerAvatarMap.set(name, avatar);
+            });
+        }
+
+        // ========== 初始化选手选择面板 ==========
+        function initPlayerSelector() {
+            const container = document.getElementById('playerOptions');
+            if (!container) return;
+            container.innerHTML = '';
+            playerAvatarMap.forEach((avatar, name) => {
+                const option = document.createElement('div');
+                option.className = 'player-option';
+                option.dataset.name = name;
+                option.innerHTML = `<img src="${avatar}" alt="${name}"><span>${name}</span>`;
+                option.addEventListener('click', function() {
+                    const maxSelect = parseInt(document.getElementById('playerCount').value);
+                    const selectedOptions = document.querySelectorAll('.player-option.selected');
+                    if (this.classList.contains('selected')) {
+                        this.classList.remove('selected');
+                    } else {
+                        if (selectedOptions.length >= maxSelect) {
+                            alert(`最多选择 ${maxSelect} 名选手`);
+                            return;
+                        }
+                        this.classList.add('selected');
+                    }
+                    updateOrderEditor();
+                });
+                container.appendChild(option);
+            });
+        }
+
+        // ========== 更新顺序编辑区域 ==========
+        function updateOrderEditor() {
+            const selectedOptions = document.querySelectorAll('.player-option.selected');
+            selectedOrder = Array.from(selectedOptions).map(opt => opt.dataset.name);
+            const orderEditor = document.getElementById('orderEditor');
+            const orderList = document.getElementById('orderList');
+            if (selectedOrder.length === 0) {
+                orderEditor.style.display = 'none';
+                return;
+            }
+            orderEditor.style.display = 'block';
+            renderOrderList();
+        }
+
+        function renderOrderList() {
+            const orderList = document.getElementById('orderList');
+            orderList.innerHTML = '';
+            selectedOrder.forEach((name, index) => {
+                const avatar = playerAvatarMap.get(name) || '';
+                const item = document.createElement('div');
+                item.className = 'order-item';
+                item.innerHTML = `
+                    <span class="order-num">${index + 1}</span>
+                    ${avatar ? `<img src="${avatar}" alt="${name}">` : ''}
+                    <span class="order-name">${name}</span>
+                    <div class="order-btns">
+                        <button class="move-up" data-index="${index}" ${index === 0 ? 'disabled' : ''}>↑</button>
+                        <button class="move-down" data-index="${index}" ${index === selectedOrder.length - 1 ? 'disabled' : ''}>↓</button>
+                    </div>
+                `;
+                orderList.appendChild(item);
+            });
+            document.querySelectorAll('.move-up').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const idx = parseInt(this.dataset.index);
+                    if (idx > 0) {
+                        [selectedOrder[idx - 1], selectedOrder[idx]] = [selectedOrder[idx], selectedOrder[idx - 1]];
+                        renderOrderList();
+                    }
+                });
+            });
+            document.querySelectorAll('.move-down').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const idx = parseInt(this.dataset.index);
+                    if (idx < selectedOrder.length - 1) {
+                        [selectedOrder[idx], selectedOrder[idx + 1]] = [selectedOrder[idx + 1], selectedOrder[idx]];
+                        renderOrderList();
+                    }
+                });
+            });
+        }
+
+        document.getElementById('playerCount').addEventListener('change', function() {
+            const maxSelect = parseInt(this.value);
+            const selectedOptions = document.querySelectorAll('.player-option.selected');
+            if (selectedOptions.length > maxSelect) {
+                for (let i = selectedOptions.length - 1; i >= maxSelect; i--) {
+                    selectedOptions[i].classList.remove('selected');
+                }
+            }
+            updateOrderEditor();
+        });
+
+        // ========== 生成比赛 ==========
+        document.getElementById('generateBtn').addEventListener('click', function() {
+            const playerCount = parseInt(document.getElementById('playerCount').value);
+            const selectedOptions = document.querySelectorAll('.player-option.selected');
+            const selectedNames = Array.from(selectedOptions).map(opt => opt.dataset.name);
+
+            let names;
+            if (selectedNames.length === 0) {
+                names = Array.from({ length: playerCount }, (_, i) => `Player${i+1}`);
+            } else if (selectedNames.length === playerCount) {
+                names = [...selectedOrder];
+            } else {
+                alert(`请选择 ${playerCount} 名参赛选手（当前选中 ${selectedNames.length} 人），或取消所有选择使用默认 Player。`);
+                return;
+            }
+
+            historyStack = [];
+            updateUndoButton();
+
+            if (playerCount === 6) {
+                currentBracket = createDoubleElimination6(names);
+            } else if (playerCount === 8) {
+                currentBracket = createDoubleElimination8(names);
+            } else if (playerCount === 10) {
+                currentBracket = createDoubleElimination10(names);
+            } else {
+                alert('暂不支持该人数');
+                return;
+            }
+
+            renderInteractiveBracket(currentBracket);
+        });
+
+        // ========== 构建6人双败（含轮次标签） ==========
+        function createDoubleElimination6(playerNames) {
+            return {
+                matches: [
+                    { id: 'M1', round: '胜者组第一轮', player1: playerNames[0], player2: playerNames[1], winner: null, loser: null, nextWinId: 'M4', nextLoseId: 'M6', type: 'winner' },
+                    { id: 'M2', round: '胜者组第一轮', player1: playerNames[2], player2: playerNames[3], winner: null, loser: null, nextWinId: 'M4', nextLoseId: 'M6', type: 'winner' },
+                    { id: 'M3', round: '胜者组第一轮', player1: playerNames[4], player2: playerNames[5], winner: null, loser: null, nextWinId: 'M5', nextLoseId: 'M7', type: 'winner' },
+                    { id: 'M4', round: '胜者组半决赛', player1: null, player2: null, winner: null, loser: null, nextWinId: 'M5', nextLoseId: 'M8', type: 'winner' },
+                    { id: 'M5', round: '胜者组决赛', player1: null, player2: null, winner: null, loser: null, nextWinId: 'M9', nextLoseId: 'M8', type: 'winner' },
+                    { id: 'M6', round: '败者组第一轮', player1: null, player2: null, winner: null, loser: null, nextWinId: 'M7', nextLoseId: null, type: 'loser' },
+                    { id: 'M7', round: '败者组第二轮', player1: null, player2: null, winner: null, loser: null, nextWinId: 'M8', nextLoseId: null, type: 'loser' },
+                    { id: 'M8', round: '败者组决赛', player1: null, player2: null, winner: null, loser: null, nextWinId: 'M9', nextLoseId: null, type: 'loser' },
+                    { id: 'M9', round: '总决赛', player1: null, player2: null, winner: null, loser: null, nextWinId: null, nextLoseId: null, type: 'final' }
+                ],
+                champion: null
+            };
+        }
+
+        // ========== 构建8人双败（含轮次标签） ==========
+        function createDoubleElimination8(playerNames) {
+            return {
+                matches: [
+                    { id: 'M1', round: '胜者组第一轮', player1: playerNames[0], player2: playerNames[1], winner: null, loser: null, nextWinId: 'M5', nextLoseId: 'M8', type: 'winner' },
+                    { id: 'M2', round: '胜者组第一轮', player1: playerNames[2], player2: playerNames[3], winner: null, loser: null, nextWinId: 'M5', nextLoseId: 'M8', type: 'winner' },
+                    { id: 'M3', round: '胜者组第一轮', player1: playerNames[4], player2: playerNames[5], winner: null, loser: null, nextWinId: 'M6', nextLoseId: 'M9', type: 'winner' },
+                    { id: 'M4', round: '胜者组第一轮', player1: playerNames[6], player2: playerNames[7], winner: null, loser: null, nextWinId: 'M6', nextLoseId: 'M9', type: 'winner' },
+                    { id: 'M5', round: '胜者组半决赛', player1: null, player2: null, winner: null, loser: null, nextWinId: 'M7', nextLoseId: 'M10', type: 'winner' },
+                    { id: 'M6', round: '胜者组半决赛', player1: null, player2: null, winner: null, loser: null, nextWinId: 'M7', nextLoseId: 'M11', type: 'winner' },
+                    { id: 'M7', round: '胜者组决赛', player1: null, player2: null, winner: null, loser: null, nextWinId: 'M14', nextLoseId: 'M13', type: 'winner' },
+                    { id: 'M8', round: '败者组第一轮', player1: null, player2: null, winner: null, loser: null, nextWinId: 'M10', nextLoseId: null, type: 'loser' },
+                    { id: 'M9', round: '败者组第一轮', player1: null, player2: null, winner: null, loser: null, nextWinId: 'M11', nextLoseId: null, type: 'loser' },
+                    { id: 'M10', round: '败者组第二轮', player1: null, player2: null, winner: null, loser: null, nextWinId: 'M12', nextLoseId: null, type: 'loser' },
+                    { id: 'M11', round: '败者组第二轮', player1: null, player2: null, winner: null, loser: null, nextWinId: 'M12', nextLoseId: null, type: 'loser' },
+                    { id: 'M12', round: '败者组第三轮', player1: null, player2: null, winner: null, loser: null, nextWinId: 'M13', nextLoseId: null, type: 'loser' },
+                    { id: 'M13', round: '败者组决赛', player1: null, player2: null, winner: null, loser: null, nextWinId: 'M14', nextLoseId: null, type: 'loser' },
+                    { id: 'M14', round: '总决赛', player1: null, player2: null, winner: null, loser: null, nextWinId: null, nextLoseId: null, type: 'final' }
+                ],
+                champion: null
+            };
+        }
+
+        // ========== 构建10人双败（含轮次标签） ==========
+        function createDoubleElimination10(playerNames) {
+            return {
+                matches: [
+                    { id: 'M1', round: '资格赛', player1: playerNames[0], player2: playerNames[1], winner: null, loser: null, nextWinId: 'M3', nextLoseId: 'M7', type: 'qualifier' },
+                    { id: 'M2', round: '资格赛', player1: playerNames[2], player2: playerNames[3], winner: null, loser: null, nextWinId: 'M4', nextLoseId: 'M7', type: 'qualifier' },
+                    { id: 'M3', round: '胜者组第一轮', player1: null, player2: playerNames[4], winner: null, loser: null, nextWinId: 'M8', nextLoseId: 'M8', type: 'winner' },
+                    { id: 'M4', round: '胜者组第一轮', player1: null, player2: playerNames[5], winner: null, loser: null, nextWinId: 'M8', nextLoseId: 'M9', type: 'winner' },
+                    { id: 'M5', round: '胜者组第一轮', player1: playerNames[6], player2: playerNames[7], winner: null, loser: null, nextWinId: 'M9', nextLoseId: 'M9', type: 'winner' },
+                    { id: 'M6', round: '胜者组第一轮', player1: playerNames[8], player2: playerNames[9], winner: null, loser: null, nextWinId: 'M9', nextLoseId: 'M10', type: 'winner' },
+                    { id: 'M7', round: '败者组第一轮', player1: null, player2: null, winner: null, loser: null, nextWinId: 'M10', nextLoseId: null, type: 'loser' },
+                    { id: 'M8', round: '胜者组半决赛', player1: null, player2: null, winner: null, loser: null, nextWinId: 'M11', nextLoseId: 'M12', type: 'winner' },
+                    { id: 'M9', round: '胜者组半决赛', player1: null, player2: null, winner: null, loser: null, nextWinId: 'M11', nextLoseId: 'M13', type: 'winner' },
+                    { id: 'M10', round: '败者组第二轮', player1: null, player2: null, winner: null, loser: null, nextWinId: 'M12', nextLoseId: null, type: 'loser' },
+                    { id: 'M11', round: '败者组第二轮', player1: null, player2: null, winner: null, loser: null, nextWinId: 'M13', nextLoseId: null, type: 'loser' },
+                    { id: 'M12', round: '胜者组决赛', player1: null, player2: null, winner: null, loser: null, nextWinId: 'M15', nextLoseId: 'M14', type: 'winner' },
+                    { id: 'M13', round: '败者组第三轮', player1: null, player2: null, winner: null, loser: null, nextWinId: 'M14', nextLoseId: null, type: 'loser' },
+                    { id: 'M14', round: '败者组决赛', player1: null, player2: null, winner: null, loser: null, nextWinId: 'M15', nextLoseId: null, type: 'loser' },
+                    { id: 'M15', round: '总决赛', player1: null, player2: null, winner: null, loser: null, nextWinId: null, nextLoseId: null, type: 'final' }
+                ],
+                champion: null
+            };
+        }
+
+        // ========== 选择胜者 ==========
+        function selectWinner(matchId, winnerName) {
+            const match = currentBracket.matches.find(m => m.id === matchId);
+            if (!match || match.winner) return;
+            historyStack.push(JSON.parse(JSON.stringify(currentBracket)));
+            updateUndoButton();
+            match.winner = winnerName;
+            match.loser = (match.player1 === winnerName) ? match.player2 : match.player1;
+            if (match.nextWinId) {
+                const nextMatch = currentBracket.matches.find(m => m.id === match.nextWinId);
+                if (nextMatch) {
+                    if (!nextMatch.player1) nextMatch.player1 = winnerName;
+                    else if (!nextMatch.player2) nextMatch.player2 = winnerName;
+                }
+            }
+            if (match.nextLoseId) {
+                const loseMatch = currentBracket.matches.find(m => m.id === match.nextLoseId);
+                if (loseMatch) {
+                    if (!loseMatch.player1) loseMatch.player1 = match.loser;
+                    else if (!loseMatch.player2) loseMatch.player2 = match.loser;
+                }
+            }
+            const finalMatch = currentBracket.matches.find(m => m.type === 'final');
+            if (finalMatch && finalMatch.winner) currentBracket.champion = finalMatch.winner;
+            renderInteractiveBracket(currentBracket);
+        }
+
+        // ========== 撤销 ==========
+        function undoLastAction() {
+            if (historyStack.length === 0) return;
+            currentBracket = historyStack.pop();
+            updateUndoButton();
+            renderInteractiveBracket(currentBracket);
+        }
+        function updateUndoButton() { undoBtn.disabled = historyStack.length === 0; }
+        undoBtn.addEventListener('click', undoLastAction);
+
+        // ========== 渲染交互式流程图（按轮次分组） ==========
+        function renderInteractiveBracket(bracket) {
+            const resultDiv = document.getElementById('matchResult');
+            if (!bracket) return;
+
+            const winnerMatches = bracket.matches.filter(m => m.type === 'winner' || m.type === 'qualifier');
+            const loserMatches = bracket.matches.filter(m => m.type === 'loser');
+            const finalMatch = bracket.matches.find(m => m.type === 'final');
+            const champion = bracket.champion;
+
+            const winnerGroups = groupByRound(winnerMatches);
+            const loserGroups = groupByRound(loserMatches);
+
+            let html = '<div class="bracket-wrapper"><div class="bracket-columns">';
+
+            html += '<div class="bracket-column winner-column"><div class="bracket-column-title">胜者组</div>';
+            winnerGroups.forEach(group => {
+                html += `<div class="match-round-boxes"><div class="match-round-title">${group.round}</div>`;
+                group.matches.forEach(m => html += renderMatchBox(m));
+                html += '</div>';
+            });
+            html += '</div>';
+
+            html += '<div class="bracket-column loser-column"><div class="bracket-column-title">败者组</div>';
+            loserGroups.forEach(group => {
+                html += `<div class="match-round-boxes"><div class="match-round-title">${group.round}</div>`;
+                group.matches.forEach(m => html += renderMatchBox(m));
+                html += '</div>';
+            });
+            html += '</div>';
+
+            html += '</div>';
+
+            html += '<div class="final-section">';
+            html += '<div class="match-round-title">总决赛</div>';
+            html += renderMatchBox(finalMatch);
+            html += '<div class="match-round-title">冠军</div>';
+            if (champion && playerAvatarMap.has(champion)) {
+                html += `<div class="match-box champion-box"><img class="champion-avatar" src="${playerAvatarMap.get(champion)}" alt="冠军"></div>`;
+            } else {
+                html += `<div class="match-box champion-box"><div class="versus">🏆 待定</div></div>`;
+            }
+            html += '</div></div>';
+
+            resultDiv.innerHTML = html;
+
+            document.querySelectorAll('.clickable-player').forEach(el => {
+                if (!el.classList.contains('disabled')) {
+                    el.addEventListener('click', function() {
+                        selectWinner(this.dataset.matchId, this.dataset.playerName);
+                    });
+                }
+            });
+        }
+
+        function groupByRound(matches) {
+            const groups = {};
+            matches.forEach(m => {
+                const round = m.round || '其他';
+                if (!groups[round]) groups[round] = [];
+                groups[round].push(m);
+            });
+            const order = ['资格赛', '胜者组第一轮', '胜者组半决赛', '胜者组决赛', '败者组第一轮', '败者组第二轮', '败者组第三轮', '败者组决赛'];
+            return Object.keys(groups)
+                .filter(round => groups[round].length > 0)
+                .sort((a, b) => {
+                    const idxA = order.indexOf(a) !== -1 ? order.indexOf(a) : 99;
+                    const idxB = order.indexOf(b) !== -1 ? order.indexOf(b) : 99;
+                    return idxA - idxB;
+                })
+                .map(round => ({ round, matches: groups[round] }));
+        }
+
+        function renderMatchBox(match) {
+            if (!match) return '';
+            const players = [
+                { name: match.player1 || '待定', isClickable: !!match.player1 && !match.winner },
+                { name: match.player2 || '待定', isClickable: !!match.player2 && !match.winner }
+            ];
+            const winnerName = match.winner;
+            const loserName = match.loser;
+            let html = `<div class="match-box"><div class="versus">`;
+            players.forEach((p, idx) => {
+                if (p.name === '待定') {
+                    html += `<span class="clickable-player disabled">待定</span>`;
+                } else {
+                    const avatar = playerAvatarMap.get(p.name);
+                    const avatarHtml = avatar ? `<img class="player-avatar-in-match" src="${avatar}" alt="${p.name}">` : '';
+                    if (p.isClickable) {
+                        html += `<span class="clickable-player" data-match-id="${match.id}" data-player-name="${p.name}">${avatarHtml}${p.name}</span>`;
+                    } else {
+                        html += `<span class="${winnerName === p.name ? 'winner-text' : ''}">${avatarHtml}${p.name}</span>`;
+                    }
+                }
+                if (idx === 0) html += ' vs ';
+            });
+            html += `</div>`;
+            if (winnerName) {
+                html += `<div class="result">✅ ${winnerName} 胜</div>`;
+                if (loserName) html += `<div class="loser-info">❌ ${loserName} 负</div>`;
+            }
+            html += `</div>`;
+            return html;
+        }
+
+        // ========== 初始化 ==========
+        window.addEventListener('DOMContentLoaded', function() {
+            initAvatarMap();
+            initPlayerSelector();
+        });
+    </script>
+</body>
+</html>
